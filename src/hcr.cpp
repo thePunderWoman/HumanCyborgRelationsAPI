@@ -32,31 +32,31 @@
 }; */
 
 HCRVocalizer::HCRVocalizer(const uint8_t addr, TwoWire &i2c)
-    : _i2caddr(addr), _i2c(&i2c), _serialBaud(400000)
+    : _i2caddr(addr), _i2c(&i2c), _serialBaud(400000), _wavPlayDelay(HCR_WAV_PLAY_DELAY)
 {
     connectionType=0x03;
 }
 
 HCRVocalizer::HCRVocalizer(const uint8_t addr, TwoWire &i2c, int baud)
-    : _i2caddr(addr), _i2c(&i2c), _serialBaud(baud)
+    : _i2caddr(addr), _i2c(&i2c), _serialBaud(baud), _wavPlayDelay(HCR_WAV_PLAY_DELAY)
 {
     connectionType=0x03;
 }
 
 HCRVocalizer::HCRVocalizer(HardwareSerial *conn,int baud)
-    : _serial(conn), _serialBaud(baud)
+    : _serial(conn), _serialBaud(baud), _wavPlayDelay(HCR_WAV_PLAY_DELAY)
 {
     connectionType=0x01;
 }
 
 HCRVocalizer::HCRVocalizer(SoftwareSerial *conn,int baud)
-    : _softserial(conn), _serialBaud(baud)
+    : _softserial(conn), _serialBaud(baud), _wavPlayDelay(HCR_WAV_PLAY_DELAY)
 {
     connectionType=0x02;
 }
 
 HCRVocalizer::HCRVocalizer(int rx, int tx,int baud)
-    : _serialBaud(9600)
+    : _serialBaud(9600), _wavPlayDelay(HCR_WAV_PLAY_DELAY)
 {
     #if defined(ARDUINO_ARCH_AVR) || defined(ARDUINO_ARCH_PIC32)
     connectionType=0x02;
@@ -455,7 +455,7 @@ void HCRVocalizer::PlayWAV(int ch,int fileNumber)
 
 void HCRVocalizer::PlayWAV(int ch,String file) {
     if (millis() > lastPlayWAV) {
-        lastPlayWAV = millis() + 5000;
+        lastPlayWAV = millis() + _wavPlayDelay;
         char channel[] = "VAB";
         String msg = "C" + ToString((char) channel[ch]) + file + ",QP" + ToString((char) channel[ch]);
         sendCommand(msg);
@@ -569,6 +569,11 @@ float HCRVocalizer::getVolume(int ch)
         volume = Volume_V;
     };
     return volume;
+}
+
+void HCRVocalizer::setWAVPlayDelay(unsigned long delay)
+{
+    _wavPlayDelay = delay;
 }
 
 String HCRVocalizer::getValue(String data, char separator, int index)

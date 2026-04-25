@@ -26,6 +26,10 @@
 #define HCR_I2C_RATE 400000
 #endif
 
+#ifndef HCR_WAV_PLAY_DELAY
+#define HCR_WAV_PLAY_DELAY 5000
+#endif
+
 #define CONN_SERIAL0 0x00 //"Serial"
 #define CONN_SERIAL1 0x01 //"Serial1"
 #define CONN_SERIAL2 0x02 //"Serial2"
@@ -307,6 +311,13 @@ public:
     float getVolume(int e);
     void getUpdate(void);
 
+    /**
+     * @brief Sets the delay between WAV file plays (in milliseconds)
+     * 
+     * @param delay the delay in milliseconds (default: 5000)
+     */
+    void setWAVPlayDelay(unsigned long delay);
+
     void dfPlayer();
 
 private:
@@ -347,6 +358,7 @@ protected:
     int Volume_V;
     int Volume_A;
     int Volume_B;
+    unsigned long _wavPlayDelay;
 };
 
 using namespace std;
