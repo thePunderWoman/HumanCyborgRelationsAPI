@@ -307,6 +307,23 @@ public:
     float getVolume(int e);
     void getUpdate(void);
 
+    /**
+     * @brief Returns the filename of the WAV file at the specified index
+     * Files are named sequentially (0000.WAV, 0001.WAV, etc.) by default
+     * 
+     * @param fileIndex the index of the file (0 to GetWAVCount()-1)
+     * @return String the filename (e.g., "0000.WAV")
+     */
+    String GetWAVFileName(int fileIndex);
+
+    /**
+     * @brief Returns an array of all WAV filenames currently on the SD card
+     * Caller is responsible for managing the returned array memory
+     * 
+     * @return String* pointer to an array of filenames
+     */
+    String* GetWAVFileList(void);
+
     void dfPlayer();
 
 private:
@@ -347,6 +364,8 @@ protected:
     int Volume_V;
     int Volume_A;
     int Volume_B;
+    String* _wavFileList;
+    int _wavFileListSize;
 };
 
 using namespace std;

@@ -32,31 +32,31 @@
 }; */
 
 HCRVocalizer::HCRVocalizer(const uint8_t addr, TwoWire &i2c)
-    : _i2caddr(addr), _i2c(&i2c), _serialBaud(400000)
+    : _i2caddr(addr), _i2c(&i2c), _serialBaud(400000), _wavFileList(nullptr), _wavFileListSize(0)
 {
     connectionType=0x03;
 }
 
 HCRVocalizer::HCRVocalizer(const uint8_t addr, TwoWire &i2c, int baud)
-    : _i2caddr(addr), _i2c(&i2c), _serialBaud(baud)
+    : _i2caddr(addr), _i2c(&i2c), _serialBaud(baud), _wavFileList(nullptr), _wavFileListSize(0)
 {
     connectionType=0x03;
 }
 
 HCRVocalizer::HCRVocalizer(HardwareSerial *conn,int baud)
-    : _serial(conn), _serialBaud(baud)
+    : _serial(conn), _serialBaud(baud), _wavFileList(nullptr), _wavFileListSize(0)
 {
     connectionType=0x01;
 }
 
 HCRVocalizer::HCRVocalizer(SoftwareSerial *conn,int baud)
-    : _softserial(conn), _serialBaud(baud)
+    : _softserial(conn), _serialBaud(baud), _wavFileList(nullptr), _wavFileListSize(0)
 {
     connectionType=0x02;
 }
 
 HCRVocalizer::HCRVocalizer(int rx, int tx,int baud)
-    : _serialBaud(9600)
+    : _serialBaud(9600), _wavFileList(nullptr), _wavFileListSize(0)
 {
     #if defined(ARDUINO_ARCH_AVR) || defined(ARDUINO_ARCH_PIC32)
     connectionType=0x02;
@@ -586,4 +586,40 @@ String HCRVocalizer::getValue(String data, char separator, int index)
   }
 
   return found>index ? data.substring(strIndex[0], strIndex[1]) : "";
+}
+
+String HCRVocalizer::GetWAVFileName(int fileIndex)
+{
+    if (fileIndex < 0 || fileIndex >= GetWAVCount()) {
+        return "";
+    }
+    
+    String fileName = String(fileIndex, DEC);
+    while (fileName.length() < 4) {
+        fileName = "0" + fileName;
+    }
+    fileName += ".WAV";
+    
+    return fileName;
+}
+
+String* HCRVocalizer::GetWAVFileList(void)
+{
+    int count = GetWAVCount();
+    
+    // Free existing list if any
+    if (_wavFileList != nullptr) {
+        delete[] _wavFileList;
+    }
+    
+    // Create new array
+    _wavFileList = new String[count];
+    _wavFileListSize = count;
+    
+    // Populate with filenames
+    for (int i = 0; i < count; i++) {
+        _wavFileList[i] = GetWAVFileName(i);
+    }
+    
+    return _wavFileList;
 }
