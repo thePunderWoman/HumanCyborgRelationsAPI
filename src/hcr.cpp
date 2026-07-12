@@ -165,9 +165,10 @@ void HCRVocalizer::transmit(String command, bool retry)
             _softserial->write((command + "\n").c_str());
             break;
         case 0x03:
+        {
             int i2cStatus = 0;
 
-            _i2c->beginTransmission((byte)_i2caddr);
+            _i2c->beginTransmission((uint8_t)_i2caddr);
             _i2c->write((command + "\n").c_str());
             i2cStatus = _i2c->endTransmission();
 
@@ -184,6 +185,7 @@ void HCRVocalizer::transmit(String command, bool retry)
                 }
             }
             break;
+        }
         default: break;
     }
 }
@@ -207,6 +209,7 @@ void HCRVocalizer::receive(void)
             }
             break;
         case 0x03:
+        {
             int bytes = _i2c->requestFrom((int)_i2caddr,(int)8);
             Serial.print("i2c {");
             Serial.print(bytes);
@@ -215,7 +218,7 @@ void HCRVocalizer::receive(void)
                 Serial.print("} receive: ");
                 while (_i2c->available())
                 {
-                    byte ch = _i2c->read();
+                    uint8_t ch = _i2c->read();
                     Serial.print((char)ch);
                     receiveData(ch);
                 }
@@ -226,6 +229,7 @@ void HCRVocalizer::receive(void)
                 Serial.println("} - No Response;");
             }
             break;
+        }
         default: break;
     }
 }
@@ -455,7 +459,7 @@ void HCRVocalizer::PlayWAV(int ch,int fileNumber)
 
 void HCRVocalizer::PlayWAV(int ch,String file) {
     if (millis() > lastPlayWAV) {
-        lastPlayWAV = millis() + 5000;
+        lastPlayWAV = millis() + 2000;
         char channel[] = "VAB";
         String msg = "C" + ToString((char) channel[ch]) + file + ",QP" + ToString((char) channel[ch]);
         sendCommand(msg);
