@@ -12,7 +12,7 @@
 #endif
 #endif
 
-#include <String.h>
+#include <string.h>
 #include <SoftwareSerial.h>
 #include <Wire.h>
 
