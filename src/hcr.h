@@ -53,6 +53,31 @@
     @brief  Class that stores state and functions for interacting with
             Human Cyborg Relations Vocalizer and compatible devices.
 */
+/*!
+    @brief  Optional external transport for HCRVocalizer commands. When set
+            via setExternalTransport(), outbound commands are offered to this
+            transport first; if it returns true (handled), the local serial/
+            I2C write is skipped. Lets a consuming project route commands
+            over its own alternate link (e.g. a mesh network) without
+            HCRVocalizer needing to know anything about that transport's
+            concrete type.
+*/
+class HCRTransport
+{
+public:
+    virtual ~HCRTransport() {}
+
+    /**
+     * @brief Offer a command to this transport.
+     *
+     * @param command the fully-formatted command string, as HCRVocalizer
+     *        would otherwise write it to its configured serial/I2C link
+     * @return true if this transport handled the command (skip the local
+     *         write); false to fall back to the local serial/I2C link
+     */
+    virtual bool send(const char *command) = 0;
+};
+
 class HCRVocalizer
 {
 public:
@@ -309,6 +334,21 @@ public:
 
     void dfPlayer();
 
+    /**
+     * @brief Route outbound commands through an external transport instead
+     * of this vocalizer's configured serial/I2C link. See HCRTransport.
+     *
+     * @param transport the transport to use; commands are offered to it via
+     *        HCRTransport::send() before falling back to the local link
+     */
+    void setExternalTransport(HCRTransport *transport);
+
+    /**
+     * @brief Stop routing through an external transport and resume writing
+     * to this vocalizer's configured serial/I2C link.
+     */
+    void clearExternalTransport(void);
+
 private:
     uint8_t _i2caddr=0;
     TwoWire *_i2c;
@@ -316,6 +356,7 @@ private:
     SoftwareSerial *_softserial;
     int _serialBaud;
     int connectionType;
+    HCRTransport *_externalTransport = nullptr;
 
     void transmit(String command);
     void transmit(String command, bool retry);
