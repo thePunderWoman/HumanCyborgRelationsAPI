@@ -159,7 +159,8 @@ void HCRVocalizer::transmit(String command, bool retry)
     switch (connectionType)
     {
         case 0x01:
-            _serial->write((command + "\n").c_str());
+            if (!(_externalTransport && _externalTransport->send(command.c_str())))
+                _serial->write((command + "\n").c_str());
             break;
         case 0x02:
             _softserial->write((command + "\n").c_str());
@@ -590,4 +591,14 @@ String HCRVocalizer::getValue(String data, char separator, int index)
   }
 
   return found>index ? data.substring(strIndex[0], strIndex[1]) : "";
+}
+
+void HCRVocalizer::setExternalTransport(HCRTransport *transport)
+{
+    _externalTransport = transport;
+}
+
+void HCRVocalizer::clearExternalTransport(void)
+{
+    _externalTransport = nullptr;
 }
