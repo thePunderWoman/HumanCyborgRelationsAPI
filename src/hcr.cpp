@@ -160,7 +160,11 @@ void HCRVocalizer::transmit(String command, bool retry)
     {
         case 0x01:
             if (!(_externalTransport && _externalTransport->send(command.c_str())))
-                _serial->write((command + "\n").c_str());
+                // ESP32 UART can corrupt or drop the first byte of a transmission
+                // after the line's sat idle for a bit -- prime it with a throwaway
+                // newline so that's what gets eaten instead of the first character
+                // of a real command.
+                _serial->print('\n' + command + "\n");
             break;
         case 0x02:
             _softserial->write((command + "\n").c_str());
