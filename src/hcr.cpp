@@ -108,7 +108,11 @@ void HCRVocalizer::begin(const uint16_t refspeed)
             if (_i2caddr>0){
                 _i2c->begin();
                 _i2c->setClock(_serialBaud);
+#if defined(ARDUINO_ARCH_AVR) || defined(ARDUINO_ARCH_SAMD)
+                // Not every TwoWire implementation exposes a bus timeout
+                // (e.g. ESP32's does not) -- only call it where it exists.
                 _i2c->setWireTimeout(3000 /* us */, true /* reset_on_timeout */);
+#endif
             }
             break;
         default:
@@ -167,14 +171,16 @@ void HCRVocalizer::transmit(String command, bool retry)
                 _serial->print('\n' + command + "\n");
             break;
         case 0x02:
-            _softserial->write((command + "\n").c_str());
+            // Same idle-line first-byte risk as the HardwareSerial case above.
+            _softserial->print('\n' + command + "\n");
             break;
         case 0x03:
         {
             int i2cStatus = 0;
 
+            String i2cLine = command + "\n";
             _i2c->beginTransmission((uint8_t)_i2caddr);
-            _i2c->write((command + "\n").c_str());
+            _i2c->write((const uint8_t*)i2cLine.c_str(), i2cLine.length());
             i2cStatus = _i2c->endTransmission();
 
             // Serial.print(command); Serial.print("-"); Serial.print(i2cStatus); Serial.println(";");

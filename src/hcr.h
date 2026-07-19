@@ -13,7 +13,28 @@
 #endif
 
 #include <string.h>
+#if defined(ARDUINO_ARCH_AVR) || defined(ARDUINO_ARCH_PIC32)
 #include <SoftwareSerial.h>
+#else
+// No SoftwareSerial on this architecture (e.g. ESP32). HCRVocalizer's
+// SoftwareSerial code path is only reachable via the SoftwareSerial* /
+// (rx,tx) constructors; this stand-in exists purely so those unconditional
+// call sites elsewhere in this class still compile on architectures with no
+// real SoftwareSerial implementation available. It's never instantiated for
+// real there.
+class SoftwareSerial {
+public:
+    SoftwareSerial() {}
+    SoftwareSerial(int rx, int tx) {}
+    void begin(long baud) {}
+    bool available() { return false; }
+    char read() { return 0; }
+    void write(const char* s) {}
+    void print(const String& s) {}
+    void println(const char* s) {}
+    operator bool() { return false; }
+};
+#endif
 #include <Wire.h>
 
 #define HCR_BUFFER_SIZE 32
