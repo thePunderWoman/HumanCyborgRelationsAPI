@@ -358,8 +358,11 @@ void HCRVocalizer::processCommands(char* input)
         Serial.print("QVB::"); Serial.println(getValue(response,',',1).toInt());
         Volume_B = getValue(response,',',1).toInt();
     }
-    else if (qC.equals((String)"DF"))
+    else if (qC.equals((String)"QD") || qC.equals((String)"DF"))
     {
+        // Embedded firmware v4+ replies to <QD> with a "QD" prefix instead of
+        // the earlier "DF" prefix -- accept both so this library keeps working
+        // against pre-v4 and v4+ devices alike.
         emote_happy = getValue(response,',',1).toInt();
         emote_sad = getValue(response,',',2).toInt();
         emote_mad = getValue(response,',',3).toInt();
@@ -456,25 +459,25 @@ void HCRVocalizer::SetMuse(int v) {
     sendCommand(msg);
 }
 
-unsigned long lastPlayWAV = millis();
+// Debounce is per channel (V/A/B) so a play on one channel never drops a play
+// on another; each channel can re-fire 150 ms after its own last play.
+unsigned long lastPlayWAV[3] = {0, 0, 0};   // next-allowed millis() per channel
 void HCRVocalizer::PlayWAV(int ch,int fileNumber)
 {
-    if (millis() > lastPlayWAV) {
-        String fileName = String(fileNumber, DEC);
-        for (int i = fileName.length(); i < 4; i++) {
-            fileName = "0" + fileName;
-        }
-        PlayWAV(ch,fileName);
+    String fileName = String(fileNumber, DEC);
+    for (int i = fileName.length(); i < 4; i++) {
+        fileName = "0" + fileName;
     }
+    PlayWAV(ch,fileName);
 }
 
 void HCRVocalizer::PlayWAV(int ch,String file) {
-    if (millis() > lastPlayWAV) {
-        lastPlayWAV = millis() + 2000;
-        char channel[] = "VAB";
-        String msg = "C" + ToString((char) channel[ch]) + file + ",QP" + ToString((char) channel[ch]);
-        sendCommand(msg);
-    }
+    if (ch < 0 || ch > 2) return;
+    if (millis() < lastPlayWAV[ch]) return;
+    lastPlayWAV[ch] = millis() + 150;
+    char channel[] = "VAB";
+    String msg = "C" + ToString((char) channel[ch]) + file + ",QP" + ToString((char) channel[ch]);
+    sendCommand(msg);
 }
 
 void HCRVocalizer::StopWAV(int ch) {
